@@ -149,7 +149,7 @@
         var size = _state.size;
         var itemsPerRow = _state.itemsPerRow;
 
-        this.setState(this.constrain(from, size, itemsPerRow, next));
+        this.setPendingState(this.constrain(from, size, itemsPerRow, next));
       }
     }, {
       key: 'componentDidMount',
@@ -174,6 +174,26 @@
         window.removeEventListener('resize', this.updateFrame);
         this.scrollParent.removeEventListener('scroll', this.updateFrame, PASSIVE);
         this.scrollParent.removeEventListener('mousewheel', NOOP, PASSIVE);
+        if (this.afId) cancelAnimationFrame(this.afId);
+      }
+    }, {
+      key: 'setPendingState',
+      value: function setPendingState(state, cb) {
+        if (!window.requestAnimationFrame) return this.stateState(state, cb);
+
+        this.pendingState = { state: state, cb: cb };
+        if (!this.afId) this.afId = requestAnimationFrame(this.applyPendingState.bind(this));
+      }
+    }, {
+      key: 'applyPendingState',
+      value: function applyPendingState() {
+        var _pendingState = this.pendingState;
+        var state = _pendingState.state;
+        var cb = _pendingState.cb;
+
+        delete this.afId;
+        delete this.pendingState;
+        this.setState(state, cb);
       }
     }, {
       key: 'getOffset',
@@ -362,7 +382,8 @@
         var pageSize = _props4.pageSize;
         var length = _props4.length;
 
-        this.setState({ size: Math.min(this.state.size + pageSize, length) }, cb);
+        var size = Math.min(this.state.size + pageSize, length);
+        this.setPendingState({ size: size }, cb);
       }
     }, {
       key: 'updateVariableFrame',
@@ -401,7 +422,7 @@
           ++size;
         }
 
-        this.setState({ from: from, size: size }, cb);
+        this.setPendingState({ from: from, size: size }, cb);
       }
     }, {
       key: 'updateUniformFrame',
@@ -425,7 +446,7 @@
         var size = _constrain.size;
 
 
-        return this.setState({ itemsPerRow: itemsPerRow, from: from, itemSize: itemSize, size: size }, cb);
+        return this.setPendingState({ itemsPerRow: itemsPerRow, from: from, itemSize: itemSize, size: size }, cb);
       }
     }, {
       key: 'getSpaceBefore',

@@ -83,7 +83,7 @@ module.exports = class ReactList extends Component {
 
   componentWillReceiveProps(next) {
     let {from, size, itemsPerRow} = this.state;
-    this.setState(this.constrain(from, size, itemsPerRow, next));
+    this.setPendingState(this.constrain(from, size, itemsPerRow, next));
   }
 
   componentDidMount() {
@@ -104,6 +104,21 @@ module.exports = class ReactList extends Component {
     window.removeEventListener('resize', this.updateFrame);
     this.scrollParent.removeEventListener('scroll', this.updateFrame, PASSIVE);
     this.scrollParent.removeEventListener('mousewheel', NOOP, PASSIVE);
+    if (this.afId) cancelAnimationFrame(this.afId);
+  }
+
+  setPendingState(state, cb) {
+    if (!window.requestAnimationFrame) return this.stateState(state, cb);
+
+    this.pendingState = {state, cb};
+    if (!this.afId) this.afId = requestAnimationFrame(::this.applyPendingState);
+  }
+
+  applyPendingState() {
+    const {state, cb} = this.pendingState;
+    delete this.afId;
+    delete this.pendingState;
+    this.setState(state, cb);
   }
 
   getOffset(el) {
@@ -257,7 +272,8 @@ module.exports = class ReactList extends Component {
     if (elEnd > end) return cb();
 
     const {pageSize, length} = this.props;
-    this.setState({size: Math.min(this.state.size + pageSize, length)}, cb);
+    const size = Math.min(this.state.size + pageSize, length);
+    this.setPendingState({size}, cb);
   }
 
   updateVariableFrame(cb) {
@@ -289,7 +305,7 @@ module.exports = class ReactList extends Component {
       ++size;
     }
 
-    this.setState({from, size}, cb);
+    this.setPendingState({from, size}, cb);
   }
 
   updateUniformFrame(cb) {
@@ -306,7 +322,7 @@ module.exports = class ReactList extends Component {
       this.props
     );
 
-    return this.setState({itemsPerRow, from, itemSize, size}, cb);
+    return this.setPendingState({itemsPerRow, from, itemSize, size}, cb);
   }
 
   getSpaceBefore(index, cache = {}) {
