@@ -71,6 +71,23 @@ module.exports = class ReactList extends Component {
     useTranslate3d: false
   };
 
+  debouncedUpdate = () => {
+    if (!window.requestAnimationFrame) return this.updateFrame();
+
+    if (!this.afId) this.afId = requestAnimationFrame(this.updateFrame);
+  };
+
+  updateFrame = cb => {
+    delete this.afId;
+    this.updateScrollParent();
+    if (typeof cb != 'function') cb = NOOP;
+    switch (this.props.type) {
+    case 'simple': return this.updateSimpleFrame(cb);
+    case 'variable': return this.updateVariableFrame(cb);
+    case 'uniform': return this.updateUniformFrame(cb);
+    }
+  };
+
   constructor(props) {
     super(props);
     const {initialIndex, pageSize} = this.props;
@@ -83,12 +100,11 @@ module.exports = class ReactList extends Component {
 
   componentWillReceiveProps(next) {
     let {from, size, itemsPerRow} = this.state;
-    this.setPendingState(this.constrain(from, size, itemsPerRow, next));
+    this.setState(this.constrain(from, size, itemsPerRow, next));
   }
 
   componentDidMount() {
-    this.updateFrame = this.updateFrame.bind(this);
-    window.addEventListener('resize', this.updateFrame);
+    window.addEventListener('resize', this.debouncedUpdate);
     this.updateFrame(this.scrollTo.bind(this, this.props.initialIndex));
   }
 
@@ -101,24 +117,11 @@ module.exports = class ReactList extends Component {
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.updateFrame);
-    this.scrollParent.removeEventListener('scroll', this.updateFrame, PASSIVE);
+    const {debouncedUpdate} = this;
+    window.removeEventListener('resize', debouncedUpdate);
+    this.scrollParent.removeEventListener('scroll', debouncedUpdate, PASSIVE);
     this.scrollParent.removeEventListener('mousewheel', NOOP, PASSIVE);
     if (this.afId) cancelAnimationFrame(this.afId);
-  }
-
-  setPendingState(state, cb) {
-    if (!window.requestAnimationFrame) return this.stateState(state, cb);
-
-    this.pendingState = {state, cb};
-    if (!this.afId) this.afId = requestAnimationFrame(::this.applyPendingState);
-  }
-
-  applyPendingState() {
-    const {state, cb} = this.pendingState;
-    delete this.afId;
-    delete this.pendingState;
-    this.setState(state, cb);
   }
 
   getOffset(el) {
@@ -234,25 +237,17 @@ module.exports = class ReactList extends Component {
     return {itemSize, itemsPerRow};
   }
 
-  updateFrame(cb) {
-    this.updateScrollParent();
-    if (typeof cb != 'function') cb = NOOP;
-    switch (this.props.type) {
-    case 'simple': return this.updateSimpleFrame(cb);
-    case 'variable': return this.updateVariableFrame(cb);
-    case 'uniform': return this.updateUniformFrame(cb);
-    }
-  }
-
   updateScrollParent() {
     const prev = this.scrollParent;
     this.scrollParent = this.getScrollParent();
     if (prev === this.scrollParent) return;
+
+    const {debouncedUpdate} = this;
     if (prev) {
-      prev.removeEventListener('scroll', this.updateFrame);
+      prev.removeEventListener('scroll', debouncedUpdate);
       prev.removeEventListener('mousewheel', NOOP);
     }
-    this.scrollParent.addEventListener('scroll', this.updateFrame, PASSIVE);
+    this.scrollParent.addEventListener('scroll', debouncedUpdate, PASSIVE);
     this.scrollParent.addEventListener('mousewheel', NOOP, PASSIVE);
   }
 
@@ -272,8 +267,7 @@ module.exports = class ReactList extends Component {
     if (elEnd > end) return cb();
 
     const {pageSize, length} = this.props;
-    const size = Math.min(this.state.size + pageSize, length);
-    this.setPendingState({size}, cb);
+    this.setState({size: Math.min(this.state.size + pageSize, length)}, cb);
   }
 
   updateVariableFrame(cb) {
@@ -305,7 +299,7 @@ module.exports = class ReactList extends Component {
       ++size;
     }
 
-    this.setPendingState({from, size}, cb);
+    this.setState({from, size}, cb);
   }
 
   updateUniformFrame(cb) {
@@ -322,7 +316,7 @@ module.exports = class ReactList extends Component {
       this.props
     );
 
-    return this.setPendingState({itemsPerRow, from, itemSize, size}, cb);
+    return this.setState({itemsPerRow, from, itemSize, size}, cb);
   }
 
   getSpaceBefore(index, cache = {}) {

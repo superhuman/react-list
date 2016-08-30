@@ -125,6 +125,26 @@
 
       var _this = _possibleConstructorReturn(this, (ReactList.__proto__ || Object.getPrototypeOf(ReactList)).call(this, props));
 
+      _this.debouncedUpdate = function () {
+        if (!window.requestAnimationFrame) return _this.updateFrame();
+
+        if (!_this.afId) _this.afId = requestAnimationFrame(_this.updateFrame);
+      };
+
+      _this.updateFrame = function (cb) {
+        delete _this.afId;
+        _this.updateScrollParent();
+        if (typeof cb != 'function') cb = NOOP;
+        switch (_this.props.type) {
+          case 'simple':
+            return _this.updateSimpleFrame(cb);
+          case 'variable':
+            return _this.updateVariableFrame(cb);
+          case 'uniform':
+            return _this.updateUniformFrame(cb);
+        }
+      };
+
       var _this$props = _this.props;
       var initialIndex = _this$props.initialIndex;
       var pageSize = _this$props.pageSize;
@@ -149,13 +169,12 @@
         var size = _state.size;
         var itemsPerRow = _state.itemsPerRow;
 
-        this.setPendingState(this.constrain(from, size, itemsPerRow, next));
+        this.setState(this.constrain(from, size, itemsPerRow, next));
       }
     }, {
       key: 'componentDidMount',
       value: function componentDidMount() {
-        this.updateFrame = this.updateFrame.bind(this);
-        window.addEventListener('resize', this.updateFrame);
+        window.addEventListener('resize', this.debouncedUpdate);
         this.updateFrame(this.scrollTo.bind(this, this.props.initialIndex));
       }
     }, {
@@ -171,29 +190,12 @@
     }, {
       key: 'componentWillUnmount',
       value: function componentWillUnmount() {
-        window.removeEventListener('resize', this.updateFrame);
-        this.scrollParent.removeEventListener('scroll', this.updateFrame, PASSIVE);
+        var debouncedUpdate = this.debouncedUpdate;
+
+        window.removeEventListener('resize', debouncedUpdate);
+        this.scrollParent.removeEventListener('scroll', debouncedUpdate, PASSIVE);
         this.scrollParent.removeEventListener('mousewheel', NOOP, PASSIVE);
         if (this.afId) cancelAnimationFrame(this.afId);
-      }
-    }, {
-      key: 'setPendingState',
-      value: function setPendingState(state, cb) {
-        if (!window.requestAnimationFrame) return this.stateState(state, cb);
-
-        this.pendingState = { state: state, cb: cb };
-        if (!this.afId) this.afId = requestAnimationFrame(this.applyPendingState.bind(this));
-      }
-    }, {
-      key: 'applyPendingState',
-      value: function applyPendingState() {
-        var _pendingState = this.pendingState;
-        var state = _pendingState.state;
-        var cb = _pendingState.cb;
-
-        delete this.afId;
-        delete this.pendingState;
-        this.setState(state, cb);
       }
     }, {
       key: 'getOffset',
@@ -332,30 +334,19 @@
         }return { itemSize: itemSize, itemsPerRow: itemsPerRow };
       }
     }, {
-      key: 'updateFrame',
-      value: function updateFrame(cb) {
-        this.updateScrollParent();
-        if (typeof cb != 'function') cb = NOOP;
-        switch (this.props.type) {
-          case 'simple':
-            return this.updateSimpleFrame(cb);
-          case 'variable':
-            return this.updateVariableFrame(cb);
-          case 'uniform':
-            return this.updateUniformFrame(cb);
-        }
-      }
-    }, {
       key: 'updateScrollParent',
       value: function updateScrollParent() {
         var prev = this.scrollParent;
         this.scrollParent = this.getScrollParent();
         if (prev === this.scrollParent) return;
+
+        var debouncedUpdate = this.debouncedUpdate;
+
         if (prev) {
-          prev.removeEventListener('scroll', this.updateFrame);
+          prev.removeEventListener('scroll', debouncedUpdate);
           prev.removeEventListener('mousewheel', NOOP);
         }
-        this.scrollParent.addEventListener('scroll', this.updateFrame, PASSIVE);
+        this.scrollParent.addEventListener('scroll', debouncedUpdate, PASSIVE);
         this.scrollParent.addEventListener('mousewheel', NOOP, PASSIVE);
       }
     }, {
@@ -382,8 +373,7 @@
         var pageSize = _props4.pageSize;
         var length = _props4.length;
 
-        var size = Math.min(this.state.size + pageSize, length);
-        this.setPendingState({ size: size }, cb);
+        this.setState({ size: Math.min(this.state.size + pageSize, length) }, cb);
       }
     }, {
       key: 'updateVariableFrame',
@@ -422,7 +412,7 @@
           ++size;
         }
 
-        this.setPendingState({ from: from, size: size }, cb);
+        this.setState({ from: from, size: size }, cb);
       }
     }, {
       key: 'updateUniformFrame',
@@ -446,7 +436,7 @@
         var size = _constrain.size;
 
 
-        return this.setPendingState({ itemsPerRow: itemsPerRow, from: from, itemSize: itemSize, size: size }, cb);
+        return this.setState({ itemsPerRow: itemsPerRow, from: from, itemSize: itemSize, size: size }, cb);
       }
     }, {
       key: 'getSpaceBefore',
