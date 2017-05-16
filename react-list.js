@@ -364,11 +364,20 @@
         if (typeof cb != 'function') cb = NOOP;
         switch (this.props.type) {
           case 'simple':
-            this.updateSimpleFrame(cb);
+            {
+              this.updateSimpleFrame(cb);
+              break;
+            }
           case 'variable':
-            this.updateVariableFrame(cb);
+            {
+              this.updateVariableFrame(cb);
+              break;
+            }
           case 'uniform':
-            this.updateUniformFrame(cb);
+            {
+              this.updateUniformFrame(cb);
+              break;
+            }
         }
         if (this.onFrameUpdate) {
           this.onFrameUpdate();

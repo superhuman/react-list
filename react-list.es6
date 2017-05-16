@@ -272,9 +272,18 @@ module.exports = class ReactList extends Component {
     this.updateScrollParent();
     if (typeof cb != 'function') cb = NOOP;
     switch (this.props.type) {
-    case 'simple': this.updateSimpleFrame(cb);
-    case 'variable': this.updateVariableFrame(cb);
-    case 'uniform': this.updateUniformFrame(cb);
+    case 'simple': {
+      this.updateSimpleFrame(cb);
+      break;
+    }
+    case 'variable': {
+      this.updateVariableFrame(cb);
+      break;
+    }
+    case 'uniform': {
+      this.updateUniformFrame(cb);
+      break;
+    }
     }
     if (this.onFrameUpdate) {
       this.onFrameUpdate();
