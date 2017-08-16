@@ -311,7 +311,9 @@
           return { itemSize: itemSize, itemsPerRow: itemsPerRow };
         }
 
-        var itemEls = findDOMNode(this.items).children;
+        var itemsNode = findDOMNode(this.items);
+        if (!itemsNode) return {};
+        var itemEls = itemsNode.children;
         if (!itemEls.length) return {};
 
         var firstEl = itemEls[0];

@@ -219,7 +219,9 @@ module.exports = class ReactList extends Component {
       return {itemSize, itemsPerRow};
     }
 
-    const itemEls = findDOMNode(this.items).children;
+    const itemsNode = findDOMNode(this.items);
+    if (!itemsNode) return {};
+    const itemEls = itemsNode.children;
     if (!itemEls.length) return {};
 
     const firstEl = itemEls[0];
