@@ -314,13 +314,15 @@ module.exports = class ReactList extends Component {
 
   waitForFrameUpdate() {
     if (!this._waitForFrameUpdate) {
-      this._waitForFrameUpdate = new Promise(function(resolve) {
-        this.onFrameUpdate = function() {
-          resolve();
-          this.onFrameUpdate = null;
-          this._waitForFrameUpdate = null;
-        }.bind(this);
-      }).bind(this);
+      this._waitForFrameUpdate = new Promise(
+        function(resolve) {
+          this.onFrameUpdate = function() {
+            resolve();
+            this.onFrameUpdate = null;
+            this._waitForFrameUpdate = null;
+          }.bind(this);
+        }.bind(this)
+      );
     }
 
     return this._waitForFrameUpdate;

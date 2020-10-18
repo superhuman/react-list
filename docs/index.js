@@ -30845,7 +30845,7 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
               this.onFrameUpdate = null;
               this._waitForFrameUpdate = null;
             }.bind(this);
-          }).bind(this);
+          }.bind(this));
         }
 
         return this._waitForFrameUpdate;
