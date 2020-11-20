@@ -300,23 +300,19 @@ module.exports = class ReactList extends Component {
   }
 
   // Called by 'scroll' and 'resize' events, clears scroll position cache.
-  updateFrameAndClearCache(cb) {
-    this.clearSizeCache();
-    return this.updateFrame(cb);
-  }
-
   updateFrameAsync() {
     if (this.frameRequested) {
       return;
     }
+    this.clearSizeCache();
     this.frameRequested = window.requestAnimationFrame(this.updateFrame);
   }
 
   waitForFrameUpdate() {
     if (!this._waitForFrameUpdate) {
       this._waitForFrameUpdate = new Promise(
-        function(resolve) {
-          this.onFrameUpdate = function() {
+        function (resolve) {
+          this.onFrameUpdate = function () {
             resolve();
             this.onFrameUpdate = null;
             this._waitForFrameUpdate = null;
@@ -333,18 +329,12 @@ module.exports = class ReactList extends Component {
     this.updateScrollParent();
     if (typeof cb != 'function') cb = NOOP;
     switch (this.props.type) {
-      case 'simple': {
-        this.updateSimpleFrame(cb);
-        break;
-      }
-      case 'variable': {
-        this.updateVariableFrame(cb);
-        break;
-      }
-      case 'uniform': {
-        this.updateUniformFrame(cb);
-        break;
-      }
+      case 'simple':
+        return this.updateSimpleFrame(cb);
+      case 'variable':
+        return this.updateVariableFrame(cb);
+      case 'uniform':
+        return this.updateUniformFrame(cb);
     }
     if (this.onFrameUpdate) {
       this.onFrameUpdate();
@@ -359,11 +349,15 @@ module.exports = class ReactList extends Component {
       prev.removeEventListener('scroll', this.updateFrameAsync);
       prev.removeEventListener('mousewheel', NOOP);
     }
+    // If we have a new parent, cached parent dimensions are no longer useful.
+    this.clearSizeCache();
     this.scrollParent.addEventListener(
       'scroll',
       this.updateFrameAsync,
       PASSIVE
     );
+    // You have to attach mousewheel listener to the scrollable element.
+    // Just an empty listener. After that onscroll events will be fired synchronously.
     this.scrollParent.addEventListener('mousewheel', NOOP, PASSIVE);
   }
 
