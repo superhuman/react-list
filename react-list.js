@@ -207,7 +207,8 @@
     _createClass(ReactList, [{
       key: "componentDidMount",
       value: function componentDidMount() {
-        this.updateFrame = this.updateFrame.bind(this);
+        this.updateFrame = this.updateFrame.bind(this); // @superhuman fork: Call this function instead of `updateFrameAndClearCache`
+
         this.updateFrameAsync = this.updateFrameAsync.bind(this);
         window.addEventListener('resize', this.updateFrameAsync);
         this.updateFrame(this.scrollTo.bind(this, this.props.initialIndex));
@@ -247,7 +248,8 @@
       value: function componentWillUnmount() {
         window.removeEventListener('resize', this.updateFrameAsync);
         this.scrollParent.removeEventListener('scroll', this.updateFrameAsync, PASSIVE);
-        this.scrollParent.removeEventListener('mousewheel', NOOP, PASSIVE);
+        this.scrollParent.removeEventListener('mousewheel', NOOP, PASSIVE); // @superhuman fork: Clean up anything that was added in forked code.
+
         window.cancelAnimationFrame(this.frameRequested);
       }
     }, {
@@ -379,7 +381,15 @@
       key: "clearSizeCache",
       value: function clearSizeCache() {
         this.cachedScrollPosition = null;
-      } // Called by 'scroll' and 'resize' events, clears scroll position cache.
+      }
+      /*
+       * @superhuman fork
+       *
+       * This function only exists on this fork, and is a substitute for
+       * `updateFrameAndClearCache` (at the time of writing).
+       *
+       * Called by 'scroll' and 'resize' events, clears scroll position cache.
+       */
 
     }, {
       key: "updateFrameAsync",
@@ -391,17 +401,26 @@
         this.clearSizeCache();
         this.frameRequested = window.requestAnimationFrame(this.updateFrame);
       }
+      /*
+       * @superhuman fork
+       * This function only exists on this fork, and lets
+       * the `getVisibleRange` function return correct value
+       * after `updateFrameAsync` has finished setting state.
+       */
+
     }, {
       key: "waitForFrameUpdate",
       value: function waitForFrameUpdate() {
+        var _this3 = this;
+
         if (!this._waitForFrameUpdate) {
           this._waitForFrameUpdate = new Promise(function (resolve) {
-            this.onFrameUpdate = function () {
+            _this3.onFrameUpdate = function () {
               resolve();
-              this.onFrameUpdate = null;
-              this._waitForFrameUpdate = null;
-            }.bind(this);
-          }.bind(this));
+              _this3.onFrameUpdate = null;
+              _this3._waitForFrameUpdate = null;
+            };
+          });
         }
 
         return this._waitForFrameUpdate;
@@ -415,14 +434,24 @@
 
         switch (this.props.type) {
           case 'simple':
-            return this.updateSimpleFrame(cb);
+            this.updateSimpleFrame(cb);
+            break;
 
           case 'variable':
-            return this.updateVariableFrame(cb);
+            this.updateVariableFrame(cb);
+            break;
 
           case 'uniform':
-            return this.updateUniformFrame(cb);
+            this.updateUniformFrame(cb);
+            break;
         }
+        /*
+         * @superhuman fork
+         * The following block needs to run every time
+         * this function is called, (not just in the `default`
+         * case above), hence the `break`s instead of `return`s.
+         */
+
 
         if (this.onFrameUpdate) {
           this.onFrameUpdate();
@@ -662,7 +691,7 @@
     }, {
       key: "renderItems",
       value: function renderItems() {
-        var _this3 = this;
+        var _this4 = this;
 
         var _this$props6 = this.props,
             itemRenderer = _this$props6.itemRenderer,
@@ -670,20 +699,20 @@
         var _this$state5 = this.state,
             from = _this$state5.from,
             size = _this$state5.size;
-        var items = [];
+        var items = []; // @superhuman fork: Pass `size` to the item renderer
 
         for (var i = 0; i < size; ++i) {
           items.push(itemRenderer(from + i, i, size));
         }
 
         return itemsRenderer(items, function (c) {
-          return _this3.items = c;
+          return _this4.items = c;
         });
       }
     }, {
       key: "render",
       value: function render() {
-        var _this4 = this;
+        var _this5 = this;
 
         var _this$props7 = this.props,
             axis = _this$props7.axis,
@@ -719,7 +748,7 @@
         return /*#__PURE__*/_react["default"].createElement("div", {
           style: style,
           ref: function ref(c) {
-            return _this4.el = c;
+            return _this5.el = c;
           }
         }, /*#__PURE__*/_react["default"].createElement("div", {
           style: listStyle
