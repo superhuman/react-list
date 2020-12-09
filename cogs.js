@@ -6,6 +6,7 @@ module.exports = {
         name: 'babel',
         only: 'react-list.es6',
         options: {
+          comments: false,
           presets: ['@babel/preset-env', '@babel/preset-react'],
           plugins: [
             '@babel/plugin-proposal-class-properties',
@@ -40,7 +41,7 @@ module.exports = {
       {
         name: 'babel',
         only: 'docs/index.es6',
-        options: { presets: ['@babel/preset-env', '@babel/preset-react'] }
+        options: { comments: false, presets: ['@babel/preset-env', '@babel/preset-react'] }
       },
       {
         name: 'concat-commonjs',
