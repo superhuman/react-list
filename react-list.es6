@@ -330,11 +330,14 @@ module.exports = class ReactList extends Component {
     if (typeof cb != 'function') cb = NOOP;
     switch (this.props.type) {
       case 'simple':
-        return this.updateSimpleFrame(cb);
+        this.updateSimpleFrame(cb);
+        break;
       case 'variable':
-        return this.updateVariableFrame(cb);
+        this.updateVariableFrame(cb);
+        break;
       case 'uniform':
-        return this.updateUniformFrame(cb);
+        this.updateUniformFrame(cb);
+        break;
     }
     if (this.onFrameUpdate) {
       this.onFrameUpdate();
