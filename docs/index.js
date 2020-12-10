@@ -31487,10 +31487,7 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
     y: 'height'
   };
 
-  var NOOP = function NOOP() {}; // If a browser doesn't support the `options` argument to
-  // add/removeEventListener, we need to check, otherwise we will
-  // accidentally set `capture` with a truthy value.
-
+  var NOOP = function NOOP() {};
 
   var PASSIVE = function () {
     if (typeof window === 'undefined') return false;
@@ -31504,8 +31501,7 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
         }
 
       });
-    } catch (e) {// noop
-    }
+    } catch (e) {}
 
     return hasSupport;
   }() ? {
@@ -31570,7 +31566,7 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
     });
   };
 
-  module.exports = (_temp = _class = /*#__PURE__*/function (_Component) {
+  module.exports = (_temp = _class = function (_Component) {
     _inherits(ReactList, _Component);
 
     var _super = _createSuper(ReactList);
@@ -31615,9 +31611,7 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
       value: function componentDidUpdate(prevProps) {
         var _this2 = this;
 
-        // Viewport scroll is no longer useful if axis changes
-        if (this.props.axis !== prevProps.axis) this.clearSizeCache(); // If the list has reached an unstable state, prevent an infinite loop.
-
+        if (this.props.axis !== prevProps.axis) this.clearSizeCache();
         if (this.unstable) return;
 
         if (++this.updateCounter > MAX_SYNC_UPDATES) {
@@ -31669,7 +31663,6 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
     }, {
       key: "getScrollPosition",
       value: function getScrollPosition() {
-        // Cache scroll position as this causes a forced synchronous layout.
         if (typeof this.cachedScrollPosition === 'number') {
           return this.cachedScrollPosition;
         }
@@ -31677,10 +31670,7 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
         var scrollParent = this.scrollParent;
         var axis = this.props.axis;
         var scrollKey = SCROLL_START_KEYS[axis];
-        var actual = scrollParent === window ? // Firefox always returns document.body[scrollKey] as 0 and Chrome/Safari
-        // always return document.documentElement[scrollKey] as 0, so take
-        // whichever has a value.
-        document.body[scrollKey] || document.documentElement[scrollKey] : scrollParent[scrollKey];
+        var actual = scrollParent === window ? document.body[scrollKey] || document.documentElement[scrollKey] : scrollParent[scrollKey];
         var max = this.getScrollSize() - this.props.scrollParentViewportSizeGetter(this);
         var scroll = Math.max(0, Math.min(actual, max));
         var el = this.getEl();
@@ -31751,11 +31741,7 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
 
         var itemEls = this.items.children;
         if (!itemEls.length) return {};
-        var firstEl = itemEls[0]; // Firefox has a problem where it will return a *slightly* (less than
-        // thousandths of a pixel) different size for the same element between
-        // renders. This can cause an infinite render loop, so only change the
-        // itemSize when it is significantly different.
-
+        var firstEl = itemEls[0];
         var firstElSize = firstEl[OFFSET_SIZE_KEYS[axis]];
         var delta = Math.abs(firstElSize - itemSize);
         if (isNaN(delta) || delta >= 1) itemSize = firstElSize;
@@ -31777,8 +31763,7 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
       key: "clearSizeCache",
       value: function clearSizeCache() {
         this.cachedScrollPosition = null;
-      } // Called by 'scroll' and 'resize' events, clears scroll position cache.
-
+      }
     }, {
       key: "updateFrameAsync",
       value: function updateFrameAsync() {
@@ -31792,14 +31777,16 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
     }, {
       key: "waitForFrameUpdate",
       value: function waitForFrameUpdate() {
+        var _this3 = this;
+
         if (!this._waitForFrameUpdate) {
           this._waitForFrameUpdate = new Promise(function (resolve) {
-            this.onFrameUpdate = function () {
+            _this3.onFrameUpdate = function () {
               resolve();
-              this.onFrameUpdate = null;
-              this._waitForFrameUpdate = null;
-            }.bind(this);
-          }.bind(this));
+              _this3.onFrameUpdate = null;
+              _this3._waitForFrameUpdate = null;
+            };
+          });
         }
 
         return this._waitForFrameUpdate;
@@ -31813,13 +31800,16 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
 
         switch (this.props.type) {
           case 'simple':
-            return this.updateSimpleFrame(cb);
+            this.updateSimpleFrame(cb);
+            break;
 
           case 'variable':
-            return this.updateVariableFrame(cb);
+            this.updateVariableFrame(cb);
+            break;
 
           case 'uniform':
-            return this.updateUniformFrame(cb);
+            this.updateUniformFrame(cb);
+            break;
         }
 
         if (this.onFrameUpdate) {
@@ -31836,13 +31826,10 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
         if (prev) {
           prev.removeEventListener('scroll', this.updateFrameAsync);
           prev.removeEventListener('mousewheel', NOOP);
-        } // If we have a new parent, cached parent dimensions are no longer useful.
-
+        }
 
         this.clearSizeCache();
-        this.scrollParent.addEventListener('scroll', this.updateFrameAsync, PASSIVE); // You have to attach mousewheel listener to the scrollable element.
-        // Just an empty listener. After that onscroll events will be fired synchronously.
-
+        this.scrollParent.addEventListener('scroll', this.updateFrameAsync, PASSIVE);
         this.scrollParent.addEventListener('mousewheel', NOOP, PASSIVE);
       }
     }, {
@@ -31946,23 +31933,20 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
       key: "getSpaceBefore",
       value: function getSpaceBefore(index) {
         var cache = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-        if (cache[index] != null) return cache[index]; // Try the static itemSize.
-
+        if (cache[index] != null) return cache[index];
         var _this$state2 = this.state,
             itemSize = _this$state2.itemSize,
             itemsPerRow = _this$state2.itemsPerRow;
 
         if (itemSize) {
           return cache[index] = Math.floor(index / itemsPerRow) * itemSize;
-        } // Find the closest space to index there is a cached value for.
-
+        }
 
         var from = index;
 
         while (from > 0 && cache[--from] == null) {
           ;
-        } // Finally, accumulate sizes of items from - index.
-
+        }
 
         var space = cache[from] || 0;
 
@@ -32002,19 +31986,15 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
         var _this$state3 = this.state,
             from = _this$state3.from,
             itemSize = _this$state3.itemSize,
-            size = _this$state3.size; // Try the static itemSize.
-
-        if (itemSize) return itemSize; // Try the itemSizeGetter.
-
-        if (itemSizeGetter) return itemSizeGetter(index); // Try the cache.
-
-        if (index in cache) return cache[index]; // Try the DOM.
+            size = _this$state3.size;
+        if (itemSize) return itemSize;
+        if (itemSizeGetter) return itemSizeGetter(index);
+        if (index in cache) return cache[index];
 
         if (type === 'simple' && index >= from && index < from + size && items) {
           var itemEl = items.children[index - from];
           if (itemEl) return itemEl[OFFSET_SIZE_KEYS[axis]];
-        } // Try the itemSizeEstimator.
-
+        }
 
         if (itemSizeEstimator) return itemSizeEstimator(index, cache);
       }
@@ -32060,7 +32040,7 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
     }, {
       key: "renderItems",
       value: function renderItems() {
-        var _this3 = this;
+        var _this4 = this;
 
         var _this$props6 = this.props,
             itemRenderer = _this$props6.itemRenderer,
@@ -32075,13 +32055,13 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
         }
 
         return itemsRenderer(items, function (c) {
-          return _this3.items = c;
+          return _this4.items = c;
         });
       }
     }, {
       key: "render",
       value: function render() {
-        var _this4 = this;
+        var _this5 = this;
 
         var _this$props7 = this.props,
             axis = _this$props7.axis,
@@ -32114,12 +32094,12 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
           WebkitTransform: transform,
           transform: transform
         };
-        return /*#__PURE__*/_react["default"].createElement("div", {
+        return _react["default"].createElement("div", {
           style: style,
           ref: function ref(c) {
-            return _this4.el = c;
+            return _this5.el = c;
           }
-        }, /*#__PURE__*/_react["default"].createElement("div", {
+        }, _react["default"].createElement("div", {
           style: listStyle
         }, items));
       }
@@ -32145,12 +32125,12 @@ Cogs.define("react-list.js", function (COGS_REQUIRE, COGS_REQUIRE_ASYNC, module,
   }), _defineProperty(_class, "defaultProps", {
     axis: 'y',
     itemRenderer: function itemRenderer(index, key) {
-      return /*#__PURE__*/_react["default"].createElement("div", {
+      return _react["default"].createElement("div", {
         key: key
       }, index);
     },
     itemsRenderer: function itemsRenderer(items, ref) {
-      return /*#__PURE__*/_react["default"].createElement("div", {
+      return _react["default"].createElement("div", {
         ref: ref
       }, items);
     },
@@ -32204,7 +32184,7 @@ function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Re
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
 var renderItem = function renderItem(index, key) {
-  return /*#__PURE__*/_react["default"].createElement("div", {
+  return _react["default"].createElement("div", {
     key: key,
     className: 'item' + (index % 2 ? '' : ' even')
   }, index);
@@ -32215,7 +32195,7 @@ renderItem.toJSON = function () {
 };
 
 var renderSquareItem = function renderSquareItem(index, key) {
-  return /*#__PURE__*/_react["default"].createElement("div", {
+  return _react["default"].createElement("div", {
     key: key,
     className: 'square-item' + (index % 2 ? '' : ' even')
   }, index);
@@ -32242,7 +32222,7 @@ getWidth.toJSON = function () {
 };
 
 var renderVariableHeightItem = function renderVariableHeightItem(index, key) {
-  return /*#__PURE__*/_react["default"].createElement("div", {
+  return _react["default"].createElement("div", {
     key: key,
     className: 'item' + (index % 2 ? '' : ' even'),
     style: {
@@ -32256,7 +32236,7 @@ renderVariableHeightItem.toJSON = function () {
 };
 
 var renderVariableWidthItem = function renderVariableWidthItem(index, key) {
-  return /*#__PURE__*/_react["default"].createElement("div", {
+  return _react["default"].createElement("div", {
     key: key,
     className: 'item' + (index % 2 ? '' : ' even'),
     style: {
@@ -32270,7 +32250,7 @@ renderVariableWidthItem.toJSON = function () {
 };
 
 var renderGridLine = function renderGridLine(row, key) {
-  return /*#__PURE__*/_react["default"].createElement(_["default"], {
+  return _react["default"].createElement(_["default"], {
     axis: "x",
     key: key,
     length: 10000,
@@ -32344,7 +32324,7 @@ var examples = [{
   useTranslate3d: true
 }];
 
-var Examples = /*#__PURE__*/function (_Component) {
+var Examples = function (_Component) {
   _inherits(Examples, _Component);
 
   var _super = _createSuper(Examples);
@@ -32359,30 +32339,30 @@ var Examples = /*#__PURE__*/function (_Component) {
     key: "renderExamples",
     value: function renderExamples() {
       return examples.map(function (props, key) {
-        return /*#__PURE__*/_react["default"].createElement("div", {
+        return _react["default"].createElement("div", {
           key: key,
           className: "example axis-".concat(props.axis)
-        }, /*#__PURE__*/_react["default"].createElement("strong", null, "Props"), /*#__PURE__*/_react["default"].createElement("pre", {
+        }, _react["default"].createElement("strong", null, "Props"), _react["default"].createElement("pre", {
           className: "props"
-        }, JSON.stringify(props, null, 2)), /*#__PURE__*/_react["default"].createElement("strong", null, "Component"), /*#__PURE__*/_react["default"].createElement("div", {
+        }, JSON.stringify(props, null, 2)), _react["default"].createElement("strong", null, "Component"), _react["default"].createElement("div", {
           className: "component"
-        }, /*#__PURE__*/_react["default"].createElement(_["default"], props)));
+        }, _react["default"].createElement(_["default"], props)));
       });
     }
   }, {
     key: "render",
     value: function render() {
-      return /*#__PURE__*/_react["default"].createElement("div", {
+      return _react["default"].createElement("div", {
         className: "index"
-      }, /*#__PURE__*/_react["default"].createElement("a", {
+      }, _react["default"].createElement("a", {
         className: "banner",
         href: "https://github.com/caseywebdev/react-list"
-      }, /*#__PURE__*/_react["default"].createElement("img", {
+      }, _react["default"].createElement("img", {
         src: "https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67",
         alt: "Fork me on GitHub"
-      })), /*#__PURE__*/_react["default"].createElement("div", {
+      })), _react["default"].createElement("div", {
         className: "header"
-      }, "ReactList"), /*#__PURE__*/_react["default"].createElement("div", {
+      }, "ReactList"), _react["default"].createElement("div", {
         className: "examples"
       }, this.renderExamples()));
     }
@@ -32391,6 +32371,6 @@ var Examples = /*#__PURE__*/function (_Component) {
   return Examples;
 }(_react.Component);
 
-(0, _reactDom.render)( /*#__PURE__*/_react["default"].createElement(Examples, null), document.getElementById('main'));
+(0, _reactDom.render)(_react["default"].createElement(Examples, null), document.getElementById('main'));
 });
 Cogs.require("docs/index.es6");

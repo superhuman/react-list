@@ -143,7 +143,10 @@ module.exports = class ReactList extends Component {
 
   componentDidMount() {
     this.updateFrame = this.updateFrame.bind(this);
+
+    // @superhuman fork: Call this function instead of `updateFrameAndClearCache`
     this.updateFrameAsync = this.updateFrameAsync.bind(this);
+
     window.addEventListener('resize', this.updateFrameAsync);
     this.updateFrame(this.scrollTo.bind(this, this.props.initialIndex));
   }
@@ -184,6 +187,8 @@ module.exports = class ReactList extends Component {
       PASSIVE
     );
     this.scrollParent.removeEventListener('mousewheel', NOOP, PASSIVE);
+
+    // @superhuman fork: Clean up anything that was added in forked code.
     window.cancelAnimationFrame(this.frameRequested);
   }
 
@@ -299,7 +304,14 @@ module.exports = class ReactList extends Component {
     this.cachedScrollPosition = null;
   }
 
-  // Called by 'scroll' and 'resize' events, clears scroll position cache.
+  /*
+   * @superhuman fork
+   *
+   * This function only exists on this fork, and is a substitute for
+   * `updateFrameAndClearCache` (at the time of writing).
+   *
+   * Called by 'scroll' and 'resize' events, clears scroll position cache.
+   */
   updateFrameAsync() {
     if (this.frameRequested) {
       return;
@@ -308,17 +320,21 @@ module.exports = class ReactList extends Component {
     this.frameRequested = window.requestAnimationFrame(this.updateFrame);
   }
 
+  /*
+   * @superhuman fork
+   * This function only exists on this fork, and lets
+   * the `getVisibleRange` function return correct value
+   * after `updateFrameAsync` has finished setting state.
+   */
   waitForFrameUpdate() {
     if (!this._waitForFrameUpdate) {
-      this._waitForFrameUpdate = new Promise(
-        function (resolve) {
-          this.onFrameUpdate = function () {
-            resolve();
-            this.onFrameUpdate = null;
-            this._waitForFrameUpdate = null;
-          }.bind(this);
-        }.bind(this)
-      );
+      this._waitForFrameUpdate = new Promise(resolve => {
+        this.onFrameUpdate = () => {
+          resolve();
+          this.onFrameUpdate = null;
+          this._waitForFrameUpdate = null;
+        };
+      });
     }
 
     return this._waitForFrameUpdate;
@@ -330,12 +346,21 @@ module.exports = class ReactList extends Component {
     if (typeof cb != 'function') cb = NOOP;
     switch (this.props.type) {
       case 'simple':
-        return this.updateSimpleFrame(cb);
+        this.updateSimpleFrame(cb);
+        break;
       case 'variable':
-        return this.updateVariableFrame(cb);
+        this.updateVariableFrame(cb);
+        break;
       case 'uniform':
-        return this.updateUniformFrame(cb);
+        this.updateUniformFrame(cb);
+        break;
     }
+    /*
+     * @superhuman fork
+     * The following block needs to run every time
+     * this function is called, (not just in the `default`
+     * case above), hence the `break`s instead of `return`s.
+     */
     if (this.onFrameUpdate) {
       this.onFrameUpdate();
     }
@@ -528,7 +553,10 @@ module.exports = class ReactList extends Component {
     const { itemRenderer, itemsRenderer } = this.props;
     const { from, size } = this.state;
     const items = [];
+
+    // @superhuman fork: Pass `size` to the item renderer
     for (let i = 0; i < size; ++i) items.push(itemRenderer(from + i, i, size));
+
     return itemsRenderer(items, c => (this.items = c));
   }
 
